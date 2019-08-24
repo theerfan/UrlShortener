@@ -1,4 +1,4 @@
-package database
+package mongodb
 
 //TODO: Change it to an api working with database, separated from the main server.
 
@@ -12,12 +12,8 @@ import (
 	"time"
 )
 
-/// Document format:
-// {"orig", "shortened", "expDate?", }
-
 var collection *mongo.Collection
-//URL URL
-// type URL util.URL
+
 
 //GiveCount MAMAd
 func GiveCount() int64 {
@@ -31,6 +27,10 @@ func GiveCount() int64 {
 
 //PutIntoDatabase mamad
 func PutIntoDatabase(url util.URL) {
+	fmt.Println(url.Protocol)
+	if url.Protocol == "" {
+		url.Protocol = "http"
+	}
 	ctx, _   := context.WithTimeout(context.Background(), 10*time.Second)
 	bsonURL, err := bson.Marshal(url)
 	collection.InsertOne(ctx, bsonURL)
@@ -41,7 +41,7 @@ func PutIntoDatabase(url util.URL) {
 
 func GetFromDatabase(short string) *util.URL {
 	var full util.URL
-	filter := bson.M{"Short": short}
+	filter := bson.M{"short": short}
 	ctx, _     := context.WithTimeout(context.Background(), 10*time.Second)
 	err := collection.FindOne(ctx, filter).Decode(&full)
 	if err != nil {
@@ -50,6 +50,7 @@ func GetFromDatabase(short string) *util.URL {
 	return &full
 }
 
+//Init initializes the database
 func Init() {
 	fmt.Println("mamaD")
 	ctx, _      := context.WithTimeout(context.Background(), 10*time.Second)
@@ -58,7 +59,6 @@ func Init() {
 		fmt.Println(err)
 	}
 	collection  = client.Database("url").Collection("short")
-	// ctx, _      = context.WithTimeout(context.Background(), 10*time.Second)
 	fmt.Println("success")
 
 }
